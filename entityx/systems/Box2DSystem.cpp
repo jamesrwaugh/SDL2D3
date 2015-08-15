@@ -114,10 +114,10 @@ b2Body* Box2DSystem::createBody(int x, int y, float wx, float wy, SpawnComponent
     b2Body*   body;
     b2BodyDef bodyDef;
     b2FixtureDef fix;
-    b2PolygonShape poly;    //Two shapes for fixtures. Must remain in scope. until CreateFixture
-    b2CircleShape circle;
+    b2PolygonShape poly;    //Two shapes for fixtures. Must remain in scope until CreateFixture
+    b2CircleShape circle;    
     bodyDef.type = btype;
-    bodyDef.position = b2Vec2(x, y);
+    bodyDef.position.Set(x,y);
     fix.density = (btype == b2_dynamicBody) ? 1.0 : 0.0;
     fix.restitution = 0.3;
     body = world->CreateBody(&bodyDef);

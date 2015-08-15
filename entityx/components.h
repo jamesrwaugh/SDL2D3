@@ -34,6 +34,7 @@ struct TextureComponent
 {
     TextureComponent(sf::Sprite sprite) : sprite(sprite) { }
     sf::Sprite sprite;
+    sf::Text positionText;
 };
 
 #endif // SDL2D3_COMPONENTS_H

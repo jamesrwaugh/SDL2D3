@@ -15,10 +15,10 @@ namespace ex = entityx;
 class TextureSystem : public ex::System<TextureSystem>, public ex::Receiver<TextureSystem>
 {
 public:
-    TextureSystem(sf::RenderWindow& rw, KeyValue& keys, ex::EntityManager& entities);
+    TextureSystem(sf::RenderWindow& rw,  ex::EntityManager& entities, KeyValue& keys);
 
     //Updating is drawing textures all over the Box2D objects
-    void update(ex::EntityManager& entities, ex::EventManager& events, ex::TimeDelta dt) override;
+    void update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta) override;
 
     //Receiving events; this is coming from the GUI enabling/disable graphic freatures
     void configure(ex::EventManager& events) override;
@@ -36,17 +36,19 @@ private:
     void loadTextures(std::vector<sf::Texture>&, const std::string&);
     std::vector<sf::Texture> boxTextures, ballTextures;
     sf::Texture bgTexture;
+    sf::Sprite bgSprite;
+    sf::Font boxFont;
 
     //Figure out textures for an entity, and untextures entities
     void addToWorld(ex::Entity e);
     void retexture(ex::Entity e);
     void scaleTexture(ex::Entity e);
-    sf::Sprite bgSprite;
     std::list<ex::Entity> unspawned;
 
     //State data. Passed from Graphics portion of GUI window
     bool imageRenderEnabled;
     bool randomTexturesEnabled;
+    bool positionTextEnabled;
 
 private:
     //EntityX reference data, convience.

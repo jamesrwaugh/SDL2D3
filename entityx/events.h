@@ -18,7 +18,8 @@ struct LightColorEvent {
     sf::Color color;
 };
 
-//Emitted from the GUI checkboxes under "Graphics"
+/* Emitted from the GUI checkboxes under "Graphics" as well as from all
+ * checkboxes controlling graphical features */
 struct GraphicsEvent {
     //Which checkbox was checked
     enum TYPE {
@@ -27,20 +28,14 @@ struct GraphicsEvent {
         ShowAAABs,
         ShowPositions,
         WindowCollision,
+        LightEnabled,
+        LightMouseEnabled,
     } type;
 
     //The new value
     bool value;
 
-    GraphicsEvent(int type, bool value) : type((TYPE)type), value(value) { }
-};
-
-/* Emitted when a click is made outside the window, indicates
- * the entity closest to these coordinates should should be destroyed */
-struct EntityRemoveEvent
-{
-    EntityRemoveEvent(float x, float y) : x(x), y(y) { }
-    float x, y;
+    GraphicsEvent(TYPE type, bool value) : type(type), value(value) { }
 };
 
 #endif

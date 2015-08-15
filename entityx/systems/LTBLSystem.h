@@ -17,7 +17,7 @@ class LTBLSystem : public ex::System<LTBLSystem>, public ex::Receiver<LTBLSystem
 {
 public:
     //Creates light system; Renderwindow and keyValue to load shaders and textures
-    LTBLSystem(sf::RenderWindow& rw, KeyValue &keys);
+    LTBLSystem(sf::RenderWindow& rw, ex::EntityManager& entities, KeyValue& keys);
 
     //Updates and draws the light system
     void update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta) override;
@@ -25,10 +25,11 @@ public:
     /*Event subscription and receiving. We care when an object is added or removed because
      *we must remove them from the light system */
     void configure(ex::EventManager& events) override;
-    void receive(const ex::ComponentAddedEvent<SpawnComponent>& e);
-    void receive(const ex::EntityDestroyedEvent& e);
-    void receive(const LightColorEvent &e);
+    void receive(const ex::ComponentAddedEvent<SpawnComponent>&);
+    void receive(const ex::EntityDestroyedEvent&);
+    void receive(const LightColorEvent&);
     void receive(const LightReloadEvent&);
+    void receive(const GraphicsEvent&);
     void receive(const sf::Event &e);
 
 private:
@@ -48,9 +49,11 @@ private:
     std::shared_ptr<ltbl::LightPointEmission> mouselight;
     std::unique_ptr<ltbl::LightSystem> ls;
     std::list<ex::Entity> unspawned;
+    bool lighingEnabled;
 
     //I/O devices (keys for textures, window for drawing)
     sf::RenderWindow& window;
+    ex::EntityManager& entities;
     KeyValue& keys;
 };
 

@@ -3,8 +3,10 @@
 #include "Box2DSystem.h"
 #include "entityx/components.h"
 
-LTBLSystem::LTBLSystem(sf::RenderWindow& rw, KeyValue& keys)
-    : window(rw)
+LTBLSystem::LTBLSystem(sf::RenderWindow& rw, entityx::EntityManager& entities, KeyValue& keys)
+    : lighingEnabled(true)
+    , window(rw)
+    , entities(entities)
     , keys(keys)
 {
     loadSetupLightSystem();
@@ -46,28 +48,29 @@ void LTBLSystem::loadTextures()
     pointLightTexture.setSmooth(true);
 }
 
-void LTBLSystem::update(ex::EntityManager& entities, ex::EventManager&, ex::TimeDelta)
+void LTBLSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
 {
     //If we have entities to place in the system, do it
     for(ex::Entity e : unspawned)
         addToWorld(e);
     unspawned.clear();
 
-    //Take all Box2D components, and update the LTBL components
-    ex::ComponentHandle<Box2DComponent> box;
-    ex::ComponentHandle<LTBLComponent> light;
-    for(ex::Entity e : entities.entities_with_components(box, light)) {
-        (void)e;
-        sf::ConvexShape& s = light->light->_shape;
-        b2Vec2 position = box->body->GetPosition();
-        s.setPosition(sf::Vector2f(position.x, position.y));
-        s.setRotation(box->body->GetAngle() * (180.0 / M_PI));
+    if(lighingEnabled) {
+        //Take all Box2D components, and update the LTBL components
+        ex::ComponentHandle<Box2DComponent> box;
+        ex::ComponentHandle<LTBLComponent> light;
+        for(ex::Entity e : entities.entities_with_components(box, light)) {
+            (void)e;
+            sf::ConvexShape& s = light->light->_shape;
+            b2Vec2 position = box->body->GetPosition();
+            s.setPosition(position.x, position.y);
+            s.setRotation(box->body->GetAngle() * (180.0 / M_PI));
+        }
+        //RENDER THE LIGHTS
+        ls->render(window.getView(), unshadowShader, lightOverShapeShader);
+        sf::Sprite lighting(ls->getLightingTexture());
+        window.draw(lighting, sf::BlendMultiply);
     }
-
-    //RENDER THE LIGHTS
-    ls->render(window.getView(), unshadowShader, lightOverShapeShader);
-    sf::Sprite lighting(ls->getLightingTexture());
-    window.draw(lighting, sf::BlendMultiply);
 }
 
 void LTBLSystem::addToWorld(ex::Entity e)
@@ -78,27 +81,27 @@ void LTBLSystem::addToWorld(ex::Entity e)
     //Use the SpawnComponent to create a light with the right body and x/y points
     auto spawn = e.component<SpawnComponent>();
     if(spawn->type == SpawnComponent::BOX) {
-        float width = Box2DSystem::box_halfwidth * 2;
+        float w = Box2DSystem::box_halfwidth * 2;
         sf::ConvexShape& light = lightShape->_shape;
         light.setPointCount(4);
-        light.setPoint(0, sf::Vector2f(    0,  0));
-        light.setPoint(1, sf::Vector2f(    0, width));
-        light.setPoint(2, sf::Vector2f(width, width));
-        light.setPoint(3, sf::Vector2f(width,  0));
-        light.setOrigin(sf::Vector2f(width/2, width/2));
+        light.setPoint(0, {0, 0});
+        light.setPoint(1, {0, w});
+        light.setPoint(2, {w, w});
+        light.setPoint(3, {w, 0});
+        light.setOrigin({w/2, w/2});
     }
     else {
         //Circle requested; create circle shape and copy points out.
         float radius = Box2DSystem::circle_radius;
-        sf::CircleShape circle(radius, 15);
+        sf::CircleShape circle(radius, 10);
         int nPoints = circle.getPointCount();
         lightShape->_shape.setPointCount(nPoints);
         for(int i = 0; i != nPoints; ++i)
             lightShape->_shape.setPoint(i, circle.getPoint(i));
-        lightShape->_shape.setOrigin(sf::Vector2f(radius, radius));
+        lightShape->_shape.setOrigin(radius, radius);
     }
 
-    lightShape->_shape.setPosition(sf::Vector2f(spawn->x, spawn->y));
+    lightShape->_shape.setPosition(spawn->x, spawn->y);
 
     //Add a LTBL component to the entity, and add to light system
     e.assign<LTBLComponent>(lightShape);
@@ -133,25 +136,48 @@ void LTBLSystem::receive(const LightColorEvent &e)
 void LTBLSystem::receive(const LightReloadEvent&)
 {
     loadSetupLightSystem();
+    for(ex::Entity e : entities.entities_with_components<Box2DComponent>()) {
+        addToWorld(e);
+    }
+}
+
+void LTBLSystem::receive(const GraphicsEvent& e)
+{
+    switch(e.type)
+    {
+    case GraphicsEvent::LightEnabled:
+        lighingEnabled = e.value;
+        break;
+    case GraphicsEvent::LightMouseEnabled:
+        if(e.value) {
+            ls->addLight(mouselight);
+        } else {
+            ls->removeLight(mouselight);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void LTBLSystem::receive(const sf::Event &e)
 {
     switch(e.type)
     {
-        //Update mouse light when mouse move
-        case sf::Event::MouseMoved: {
-            mouselight->_emissionSprite.setPosition(e.mouseMove.x, e.mouseMove.y);
-            break;
-        }
-        //Change size of light when scrolled
-        case sf::Event::MouseWheelScrolled: {
-            sf::Vector2f scale = mouselight->_emissionSprite.getScale();
-            float delta = e.mouseWheelScroll.delta;
-            mouselight->_emissionSprite.setScale(scale + sf::Vector2f(delta,delta));
-            break;
-        }
-        default:
-            break;
+    //Update mouse light when mouse move
+    case sf::Event::MouseMoved: {
+        mouselight->_emissionSprite.setPosition(e.mouseMove.x, e.mouseMove.y);
+        break;
+    }
+    //Change size of light when scrolled
+    case sf::Event::MouseWheelScrolled: {
+        sf::Vector2f scale = mouselight->_emissionSprite.getScale();
+        float delta = e.mouseWheelScroll.delta;
+        mouselight->_emissionSprite.setScale(scale + sf::Vector2f(delta,delta));
+        mouselight->_sourceRadius += delta;
+        break;
+    }
+    default:
+        break;
     }
 }

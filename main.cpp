@@ -38,8 +38,8 @@ SDL2D3::SDL2D3(int argc, char** argv)
     //Initialize systems
     systems.add<Box2DSystem>(window);
     systems.add<SFGUISystem>(window, entities, events);
-    systems.add<LTBLSystem>(window, keys);
-    systems.add<TextureSystem>(window, keys, entities);
+    systems.add<LTBLSystem>(window, entities, keys);
+    systems.add<TextureSystem>(window,entities, keys);
     systems.configure();
 }
 

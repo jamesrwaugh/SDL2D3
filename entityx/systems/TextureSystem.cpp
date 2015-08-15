@@ -1,10 +1,11 @@
 #include "Box2DSystem.h"
 #include "TextureSystem.h"
 
-TextureSystem::TextureSystem(sf::RenderWindow& rw, KeyValue& keys, entityx::EntityManager& entities)
+TextureSystem::TextureSystem(sf::RenderWindow& rw, entityx::EntityManager& entities, KeyValue& keys)
     : window(rw)
     , imageRenderEnabled(false)
     , randomTexturesEnabled(true)
+    , positionTextEnabled(false)
     , entities(entities)
 {
     /* This doesn't change. It maps the type shape to the vector of textures aviliable
@@ -26,6 +27,9 @@ TextureSystem::TextureSystem(sf::RenderWindow& rw, KeyValue& keys, entityx::Enti
     bgSprite.setTexture(bgTexture);
     auto windsz = rw.getSize();
     bgSprite.setTextureRect(sf::IntRect(0, 0, windsz.x*2, windsz.y*2));
+
+    //Font for displaying positions and other things
+    boxFont.loadFromFile(keys.GetString("OBJECT_FONT"));
 }
 
 //General-porpose string split function
@@ -52,32 +56,40 @@ void TextureSystem::loadTextures(std::vector<sf::Texture>& dest, const std::stri
     }
 }
 
-void TextureSystem::update(ex::EntityManager& entities, ex::EventManager& events, ex::TimeDelta dt)
+void TextureSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
 {
-    (void)entities;
-    (void)events;
-    (void)dt;
-
     //Untextured entities, deal with them
     for(ex::Entity e : unspawned)
         addToWorld(e);
     unspawned.clear();
 
-    if(imageRenderEnabled) {
-        //Draw backgound
+    //Draw background first if enabled
+    if(imageRenderEnabled)
         window.draw(bgSprite);
-        //For each Box2D component, draw a texture over it
-        ex::ComponentHandle<Box2DComponent> box;
-        ex::ComponentHandle<TextureComponent> tex;
-        for(ex::Entity e : entities.entities_with_components(box, tex))
-        {
-            (void)e;
+
+    /* For each entity, the texture and position text info are updated from the
+     * Box2D component, if enabled */
+    auto box = ex::ComponentHandle<Box2DComponent>();
+    auto tex = ex::ComponentHandle<TextureComponent>();
+    for(ex::Entity e : entities.entities_with_components(box, tex))
+    {
+        (void)e;
+        b2Body* body = box->body;
+        b2Vec2  position = body->GetPosition();
+
+        if(imageRenderEnabled) {
             sf::Sprite& sprite = tex->sprite;
-            b2Body* body = box->body;
-            b2Vec2  position = body->GetPosition();
             sprite.setPosition(position.x, position.y);
             sprite.setRotation(body->GetAngle() * (180 / M_PI));
             window.draw(sprite);
+        }
+        if(positionTextEnabled) {
+            char buffer[32];
+            std::snprintf(buffer, 32, "[%.3d,%.3d]", (int)position.x, (int)position.y);
+            sf::Text& text = tex->positionText;
+            text.setString(buffer);
+            text.setPosition(position.x-25, position.y-8);
+            window.draw(text);
         }
     }
 }
@@ -89,19 +101,24 @@ void TextureSystem::addToWorld(entityx::Entity e)
 
 void TextureSystem::retexture(entityx::Entity e)
 {
-    //Add a texture component if it is not there, first time.
-    auto textureComponent = e.component<TextureComponent>();
-    if(!textureComponent) {
+    //Add a texture component if it is not there. Lazy initialization
+    if(!e.has_component<TextureComponent>()) {
         e.assign<TextureComponent>(sf::Sprite());
     }
 
     /* Use the texturemap on the type the ent was spawned with to choose a random texure
      * then the new texture needs to be scaled to the Box2D component */
-    sf::Sprite& s = e.component<TextureComponent>()->sprite;
-    auto type = e.component<SpawnComponent>()->type;
-    auto& textureBank = texturemap.at(type).first;
+    auto textureComponent = e.component<TextureComponent>();
+    auto spawnShape = e.component<SpawnComponent>()->type;
+    auto& textureBank = texturemap.at(spawnShape).first;
+    sf::Sprite& s = textureComponent->sprite;
     s.setTexture(textureBank->at(rand() % (randomTexturesEnabled ? textureBank->size() : 1)), true);
     scaleTexture(e);
+
+    //Set font info
+    sf::Text& text = textureComponent->positionText;
+    text.setFont(boxFont);
+    text.setCharacterSize(12);
 }
 
 void TextureSystem::scaleTexture(entityx::Entity e)
@@ -126,11 +143,17 @@ void TextureSystem::receive(const GraphicsEvent& e)
     switch(e.type) {
     case GraphicsEvent::ImageRender: {
         imageRenderEnabled = e.value;
+        break;
     }
     case GraphicsEvent::RandomTextures: {
         randomTexturesEnabled = e.value;
         for(ex::Entity e : entities.entities_with_components<TextureComponent>())
             retexture(e);
+        break;
+    }
+    case GraphicsEvent::ShowPositions: {
+        positionTextEnabled = e.value;
+        break;
     }
     default: {
         break;
