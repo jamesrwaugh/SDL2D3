@@ -50,6 +50,7 @@ private:
     std::unique_ptr<ltbl::LightSystem> ls;
     std::list<ex::Entity> unspawned;
     bool lighingEnabled;
+    bool lightingMouseEnabled;
 
     //I/O devices (keys for textures, window for drawing)
     sf::RenderWindow& window;

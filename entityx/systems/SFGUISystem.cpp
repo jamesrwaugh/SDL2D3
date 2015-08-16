@@ -32,6 +32,9 @@ void SFGUISystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt
             clickEvent(event.mouseButton);
             break;
         }
+        case sf::Event::KeyPressed: {
+            keyEvent(event.key);
+        }
         default:
             break;
         }
@@ -50,6 +53,11 @@ void SFGUISystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt
 
 void SFGUISystem::clickEvent(sf::Event::MouseButtonEvent click)
 {
+    //Converts world mouse position to absolute position first
+    sf::Vector2f adjusted = window.mapPixelToCoords({click.x, click.y});
+    click.x = adjusted.x;
+    click.y = adjusted.y;
+
     //Do nothing if we have clicked inside the GUI window
     if(gui_window->GetAllocation().contains(click.x, click.y))
         return;
@@ -78,6 +86,31 @@ void SFGUISystem::clickEvent(sf::Event::MouseButtonEvent click)
             if(b2Distance(request, pos) < Box2DSystem::circle_radius*2)
                 entities.destroy(e.id());
         }
+    }
+}
+
+void SFGUISystem::keyEvent(sf::Event::KeyEvent key)
+{
+    static std::map<sf::Keyboard::Key, sf::Vector2f> viewMoveMap = {
+        {sf::Keyboard::Left, {-15,  0}},
+        {sf::Keyboard::Right,{ 15,  0}},
+        {sf::Keyboard::Up,   { 0, -15}},
+        {sf::Keyboard::Down, { 0,  15}}
+    };
+
+    switch(key.code)
+    {
+    case sf::Keyboard::Up:
+    case sf::Keyboard::Down:
+    case sf::Keyboard::Left:
+    case sf::Keyboard::Right: {
+        sf::View view = window.getView();
+        view.move(viewMoveMap[key.code]);
+        window.setView(view);
+        break;
+    }
+    default:
+        break;
     }
 }
 

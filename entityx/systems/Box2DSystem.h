@@ -53,6 +53,7 @@ private:
     std::list<ex::Entity> unspawned;
     std::unique_ptr<b2World> world;
     SFMLDebugDraw drawer;  
+    sf::RenderWindow& window;
 
     //State data. Just used to render Box2D debug or not
     bool debugEnabled;

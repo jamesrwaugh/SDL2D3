@@ -5,6 +5,7 @@
 
 LTBLSystem::LTBLSystem(sf::RenderWindow& rw, entityx::EntityManager& entities, KeyValue& keys)
     : lighingEnabled(true)
+    , lightingMouseEnabled(true)
     , window(rw)
     , entities(entities)
     , keys(keys)
@@ -63,8 +64,13 @@ void LTBLSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
             (void)e;
             sf::ConvexShape& s = light->light->_shape;
             b2Vec2 position = box->body->GetPosition();
-            s.setPosition(position.x, position.y);
+            s.setPosition(window.mapPixelToCoords({(int)position.x, (int)position.y}));
             s.setRotation(box->body->GetAngle() * (180.0 / M_PI));
+        }
+        //Update the mouse light's position
+        if(lightingMouseEnabled) {
+            sf::Vector2f mouse = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+            mouselight->_emissionSprite.setPosition(window.mapPixelToCoords({(int)mouse.x,(int)mouse.y}));
         }
         //RENDER THE LIGHTS
         ls->render(window.getView(), unshadowShader, lightOverShapeShader);
@@ -164,11 +170,6 @@ void LTBLSystem::receive(const sf::Event &e)
 {
     switch(e.type)
     {
-    //Update mouse light when mouse move
-    case sf::Event::MouseMoved: {
-        mouselight->_emissionSprite.setPosition(e.mouseMove.x, e.mouseMove.y);
-        break;
-    }
     //Change size of light when scrolled
     case sf::Event::MouseWheelScrolled: {
         sf::Vector2f scale = mouselight->_emissionSprite.getScale();

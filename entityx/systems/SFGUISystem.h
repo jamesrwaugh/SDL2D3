@@ -43,7 +43,8 @@ private:
 private:
     //GUI callbacks and event handlers
     void lightReloadEvent();
-    void clickEvent(sf::Event::MouseButtonEvent click);
+    void clickEvent(sf::Event::MouseButtonEvent);
+    void keyEvent(sf::Event::KeyEvent key);
     void graphicsEvent(const GraphicsEntry& entry);
     void destroyAllEntities();
 

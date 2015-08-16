@@ -3,14 +3,15 @@
 #include "Box2DSystem.h"
 
 Box2DSystem::Box2DSystem(sf::RenderWindow& rw)
-    : debugEnabled(true)
+    : window(rw)
+    , debugEnabled(true)
 {
     //Create world, initially 0 gravity
     world = std::make_unique<b2World>(b2Vec2(0,0));
 
     //Add static boxes to world to create walls around screen
-    int width  = rw.getSize().x;
-    int height = rw.getSize().y;
+    int width  = window.getSize().x;
+    int height = window.getSize().y;
     int halfwidth  = width  / 2;
     int halfheight = height / 2;
     createStaticBox(halfwidth, 10, halfwidth, 10);           //Top wall
@@ -19,7 +20,7 @@ Box2DSystem::Box2DSystem(sf::RenderWindow& rw)
     createStaticBox(halfwidth, height - 10, halfwidth, 10);  //Bottom wall
 
     //Setup Debug draw and link to world
-    drawer.setWindow(rw);
+    drawer.setWindow(window);
     drawer.SetFlags(b2Draw::e_shapeBit);
     world->SetDebugDraw(&drawer);
 }
