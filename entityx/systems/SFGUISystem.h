@@ -27,7 +27,6 @@ private:
     sfg::SFGUI gui;               //Obligatory
     sfg::Window::Ptr gui_window;  //The single GUI window
 
-private:
     /* Slider section and data, because the sfg::Scale doesn't have slider
      * dragged/dropped events, we poll the sliders each update() with this data */
     void checkSliderEvents();
@@ -42,14 +41,18 @@ private:
 
 private:
     //GUI callbacks and event handlers
+    void onMouseClick(sf::Event::MouseButtonEvent);
+    void onKeyPressed(sf::Event::KeyEvent);
+    void onMouseWheelScrolled(sf::Event::MouseWheelScrollEvent);
+    void moveWindowView();
+    void resetWindowView();
     void lightReloadEvent();
-    void clickEvent(sf::Event::MouseButtonEvent);
-    void keyEvent(sf::Event::KeyEvent key);
     void graphicsEvent(const GraphicsEntry& entry);
     void destroyAllEntities();
 
 private:
-    ex::EntityManager& entities;
+    sf::Sprite cursor;              //Cursor sprite
+    ex::EntityManager& entities;    //EntityX convience items
     ex::EventManager& events;
 };
 

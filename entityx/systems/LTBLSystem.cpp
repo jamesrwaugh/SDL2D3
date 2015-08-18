@@ -21,9 +21,11 @@ void LTBLSystem::loadSetupLightSystem()
     //Initialize the light system
     ls = std::make_unique<ltbl::LightSystem>();
     ls->create({0,0,9999,9999}, window.getSize(), penumbraTexture, unshadowShader, lightOverShapeShader);
+    ls->_directionEmissionRange = 200;
+    ls->_directionEmissionRadiusMultiplier = 0.3;
+    ls->_ambientColor = {100,100,100};
 
-    /* Create a point light, remove if already made, then set
-     * origin to half that of the sprite and set other parameters */
+    //Create and setup the mouse light
     ls->removeLight(mouselight);
     sf::Vector2u texsize { pointLightTexture.getSize() };
     mouselight = std::make_shared<ltbl::LightPointEmission>();
@@ -72,7 +74,7 @@ void LTBLSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
             sf::Vector2f mouse = window.mapPixelToCoords(sf::Mouse::getPosition(window));
             mouselight->_emissionSprite.setPosition(window.mapPixelToCoords({(int)mouse.x,(int)mouse.y}));
         }
-        //RENDER THE LIGHTS
+        //Render the lights
         ls->render(window.getView(), unshadowShader, lightOverShapeShader);
         sf::Sprite lighting(ls->getLightingTexture());
         window.draw(lighting, sf::BlendMultiply);
@@ -99,7 +101,7 @@ void LTBLSystem::addToWorld(ex::Entity e)
     else {
         //Circle requested; create circle shape and copy points out.
         float radius = Box2DSystem::circle_radius;
-        sf::CircleShape circle(radius, 10);
+        sf::CircleShape circle(radius, 15);
         int nPoints = circle.getPointCount();
         lightShape->_shape.setPointCount(nPoints);
         for(int i = 0; i != nPoints; ++i)
@@ -108,6 +110,12 @@ void LTBLSystem::addToWorld(ex::Entity e)
     }
 
     lightShape->_shape.setPosition(spawn->x, spawn->y);
+
+    //Accounts for window view. The light shape must be scaled to fit the Box2D size
+    sf::View nowView = window.getView();
+    sf::View defView = window.getDefaultView();
+    float zoom = nowView.getSize().x / defView.getSize().x;
+    lightShape->_shape.scale(zoom, zoom);
 
     //Add a LTBL component to the entity, and add to light system
     e.assign<LTBLComponent>(lightShape);
@@ -170,12 +178,22 @@ void LTBLSystem::receive(const sf::Event &e)
 {
     switch(e.type)
     {
-    //Change size of light when scrolled
     case sf::Event::MouseWheelScrolled: {
-        sf::Vector2f scale = mouselight->_emissionSprite.getScale();
-        float delta = e.mouseWheelScroll.delta;
-        mouselight->_emissionSprite.setScale(scale + sf::Vector2f(delta,delta));
-        mouselight->_sourceRadius += delta;
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+            //Change size of light when scrolled and CTRL
+            sf::Vector2f scale = mouselight->_emissionSprite.getScale();
+            float delta = e.mouseWheelScroll.delta;
+            mouselight->_emissionSprite.setScale(scale + sf::Vector2f(delta,delta));
+            mouselight->_sourceRadius += delta;
+        } else {
+            //With no CTRL, we are zooming the view. Update light sprite scales
+            ex::ComponentHandle<LTBLComponent> light;
+            float direction = std::copysign(0.1, e.mouseWheelScroll.delta);
+            for(ex::Entity e : entities.entities_with_components(light)) {
+                (void)e;
+                light->light->_shape.scale(1.0 - direction, 1.0 - direction);
+            }
+        }
         break;
     }
     default:

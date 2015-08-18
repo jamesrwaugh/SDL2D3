@@ -1,3 +1,4 @@
+#include <unordered_map>
 #include <SFGUI/SFGUI.hpp>
 #include <SFGUI/Widgets.hpp>
 #include "Box2DSystem.h"
@@ -24,21 +25,21 @@ void SFGUISystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt
     {
         switch (event.type)
         {
-        case sf::Event::Closed: {
+        case sf::Event::Closed:
             window.close();
             break;
-        }
-        case sf::Event::MouseButtonPressed: {
-            clickEvent(event.mouseButton);
+        case sf::Event::MouseButtonPressed:
+            onMouseClick(event.mouseButton);
             break;
-        }
-        case sf::Event::KeyPressed: {
-            keyEvent(event.key);
-        }
+        case sf::Event::KeyPressed:
+            onKeyPressed(event.key);
+            break;
+        case sf::Event::MouseWheelScrolled:
+            onMouseWheelScrolled(event.mouseWheelScroll);
+            break;
         default:
             break;
         }
-
         //Pass on the event to other listeners
         events.emit<sf::Event>(event);
     }
@@ -46,91 +47,13 @@ void SFGUISystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt
     //Because sfg::Scale doesn't have good events
     checkSliderEvents();
 
+    //Handle view movement with keys
+    moveWindowView();
+
+    //Updates and displays the GUI (also drawn last)
     gui_window->HandleEvent(event);
     gui_window->Update(dt);
     gui.Display(window);
-}
-
-void SFGUISystem::clickEvent(sf::Event::MouseButtonEvent click)
-{
-    //Converts world mouse position to absolute position first
-    sf::Vector2f adjusted = window.mapPixelToCoords({click.x, click.y});
-    click.x = adjusted.x;
-    click.y = adjusted.y;
-
-    //Do nothing if we have clicked inside the GUI window
-    if(gui_window->GetAllocation().contains(click.x, click.y))
-        return;
-
-    /* On a left or right click, we want to spawn a new Box2D object, either
-     * a box or a circle.
-     * On a middle click, we want to remove the closest entity to the click position. This
-     * is queried using the Box2D body information to distance to the click point */
-    if(click.button == sf::Mouse::Button::Left || click.button == sf::Mouse::Button::Right) {
-        auto body_type = (click.button == sf::Mouse::Button::Left) ?
-            SpawnComponent::BOX : SpawnComponent::CIRCLE;
-        ex::Entity e = entities.create();
-        e.assign<SpawnComponent>(click.x, click.y, body_type);
-    }
-    else if(click.button == sf::Mouse::Button::Middle) {
-        b2Vec2 request(click.x, click.y);
-        auto candidates = entities.entities_with_components<Box2DComponent>();
-        ex::Entity e = *std::min_element(candidates.begin(), candidates.end(),
-            [request](ex::Entity a, ex::Entity b) {
-                b2Vec2 pos_a = a.component<Box2DComponent>()->body->GetPosition();
-                b2Vec2 pos_b = b.component<Box2DComponent>()->body->GetPosition();
-                return b2Distance(pos_a, request) < b2Distance(pos_b, request);
-            });
-        if(e.valid()) {
-            b2Vec2 pos = e.component<Box2DComponent>()->body->GetPosition();
-            if(b2Distance(request, pos) < Box2DSystem::circle_radius*2)
-                entities.destroy(e.id());
-        }
-    }
-}
-
-void SFGUISystem::keyEvent(sf::Event::KeyEvent key)
-{
-    static std::map<sf::Keyboard::Key, sf::Vector2f> viewMoveMap = {
-        {sf::Keyboard::Left, {-15,  0}},
-        {sf::Keyboard::Right,{ 15,  0}},
-        {sf::Keyboard::Up,   { 0, -15}},
-        {sf::Keyboard::Down, { 0,  15}}
-    };
-
-    switch(key.code)
-    {
-    case sf::Keyboard::Up:
-    case sf::Keyboard::Down:
-    case sf::Keyboard::Left:
-    case sf::Keyboard::Right: {
-        sf::View view = window.getView();
-        view.move(viewMoveMap[key.code]);
-        window.setView(view);
-        break;
-    }
-    default:
-        break;
-    }
-}
-
-void SFGUISystem::checkSliderEvents()
-{
-    /* Check for gravity updates from sliders the zero gravity button sets these
-     * sliders to 0, which causes this to occur as well */
-    sf::Vector2f newGrav { gravx->GetValue(), gravy->GetValue() };
-    if(newGrav != storedGrav) {
-        storedGrav = newGrav;
-        events.emit<GravityChangeEvent>(storedGrav.x, storedGrav.y);
-    }
-
-    //Checks for changes in the RGB light-color sliders
-    sf::Color newColor {
-        (sf::Uint8)colorr->GetValue(), (sf::Uint8)colorg->GetValue(), (sf::Uint8)colorb->GetValue() };
-    if(newColor != storedColor) {
-        storedColor = newColor;
-        events.emit<LightColorEvent>(newColor);
-    }
 }
 
 void SFGUISystem::createTheGUI()
@@ -234,17 +157,122 @@ void SFGUISystem::createTheGUI()
     notebook->AppendPage(Box2DWidget, sfg::Label::Create("Box2D"));
     notebook->AppendPage(LTBLWidget,  sfg::Label::Create("LTBL2"));
 
-    //And a "clear" button not in any notebook
+    //"Clear bodies" and "Reset View buttons
     auto clearButton = sfg::Button::Create("Clear Bodies");
+    auto resetButton = sfg::Button::Create("Reset View");
     clearButton->GetSignal(sfg::Button::OnMouseLeftRelease).Connect(std::bind(&SFGUISystem::destroyAllEntities, this));
+    resetButton->GetSignal(sfg::Button::OnMouseLeftRelease).Connect(std::bind(&SFGUISystem::resetWindowView, this));
+    auto miscBox = sfg::Box::Create();
+    miscBox->Pack(clearButton);
+    miscBox->Pack(resetButton);
 
     //Pack the notbook above the clear button and graphics boxes, and add to window
     auto final_box = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
     final_box->SetSpacing(8);
     final_box->Pack(notebook);
-    final_box->Pack(clearButton);
+    final_box->Pack(miscBox);
     final_box->Pack(graphicsFrame);
     gui_window->Add(final_box);
+}
+
+void SFGUISystem::onMouseWheelScrolled(sf::Event::MouseWheelScrollEvent scroll)
+{
+    //On mousewheel scrolling, we zoom the view in and out if CTRL isn't pressed
+    if(!sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+        sf::View view = window.getView();
+        float direction = std::copysign(0.1, scroll.delta);
+        view.zoom(1.0 - direction);
+        window.setView(view);
+    }
+}
+
+void SFGUISystem::onMouseClick(sf::Event::MouseButtonEvent click)
+{
+    //Do nothing if we have clicked inside the GUI window (uses global coordinates)
+    if(gui_window->GetAllocation().contains(click.x, click.y))
+        return;
+
+    //Converts global mouse position to a world position first
+    sf::Vector2f adjusted = window.mapPixelToCoords({click.x, click.y});
+    click.x = adjusted.x;
+    click.y = adjusted.y;
+
+    if(click.button == sf::Mouse::Button::Middle) {
+        /* On a middle click, we want to remove the closest entity to the click position.
+         * This is queried using the Box2D body information to distance to the click point */
+        b2Vec2 request(click.x, click.y);
+        auto candidates = entities.entities_with_components<Box2DComponent>();
+        ex::Entity e = *std::min_element(candidates.begin(), candidates.end(),
+            [request](ex::Entity a, ex::Entity b) {
+               b2Vec2 pos_a = a.component<Box2DComponent>()->body->GetPosition(),
+                      pos_b = b.component<Box2DComponent>()->body->GetPosition();
+               return b2Distance(pos_a, request) < b2Distance(pos_b, request);
+            });
+        if(e.valid()) {
+            b2Vec2 pos = e.component<Box2DComponent>()->body->GetPosition();
+            if(b2Distance(request, pos) < Box2DSystem::circle_radius*2)
+                entities.destroy(e.id());
+        }
+    } else {
+        /* On a left or right click, we want to spawn a
+         * new physics entity, either a box or a circle.  */
+        SpawnComponent::TYPE type;
+        if(click.button == sf::Mouse::Button::Left) {
+            type = SpawnComponent::BOX;
+        } else if(sf::Mouse::Button::Right) {
+            type = SpawnComponent::CIRCLE;
+        } else {
+            throw std::runtime_error("Unknown mouse button clicked");
+        }
+        ex::Entity e = entities.create();
+        e.assign<SpawnComponent>(click.x, click.y, type);
+    }
+}
+
+void SFGUISystem::onKeyPressed(sf::Event::KeyEvent)
+{
+
+}
+
+void SFGUISystem::moveWindowView()
+{
+    static std::map<sf::Keyboard::Key, sf::Vector2f> keyMoveMap = {
+        {sf::Keyboard::Left, {-15,  0}},
+        {sf::Keyboard::Right,{ 15,  0}},
+        {sf::Keyboard::Up,   { 0, -15}},
+        {sf::Keyboard::Down, { 0,  15}}
+    };
+
+    for(const auto& entry : keyMoveMap) {
+        if(sf::Keyboard::isKeyPressed(entry.first)) {
+            sf::View view = window.getView();
+            view.move(entry.second);
+            window.setView(view);
+        }
+    }
+}
+
+void SFGUISystem::resetWindowView()
+{
+    window.setView(window.getDefaultView());
+}
+
+void SFGUISystem::checkSliderEvents()
+{
+    /* Check for gravity updates from sliders. The "Zero Gravity" button
+     * sets these sliders to 0, which causes this to occur as well */
+    sf::Vector2f newGrav { gravx->GetValue(), gravy->GetValue() };
+    if(newGrav != storedGrav) {
+        storedGrav = newGrav;
+        events.emit<GravityChangeEvent>(storedGrav.x, storedGrav.y);
+    }
+
+    //Checks for changes in the RGB light-color sliders
+    sf::Color newColor {(sf::Uint8)colorr->GetValue(), (sf::Uint8)colorg->GetValue(), (sf::Uint8)colorb->GetValue()};
+    if(newColor != storedColor) {
+        storedColor = newColor;
+        events.emit<LightColorEvent>(newColor);
+    }
 }
 
 void SFGUISystem::lightReloadEvent()
