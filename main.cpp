@@ -59,7 +59,7 @@ void SDL2D3::run()
      * the reason is to more cleanly filter events and pass to other systems */
     while (window.isOpen())
     {
-        window.clear(sf::Color::White);
+        window.clear({100,100,100});
         update(clock.restart().asSeconds());
         window.display();
     }

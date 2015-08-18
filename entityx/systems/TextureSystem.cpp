@@ -26,7 +26,7 @@ TextureSystem::TextureSystem(sf::RenderWindow& rw, entityx::EntityManager& entit
     bgTexture.setRepeated(true);
     bgSprite.setTexture(bgTexture);
     auto windsz = rw.getSize();
-    bgSprite.setTextureRect(sf::IntRect(0, 0, windsz.x*2, windsz.y*2));
+    bgSprite.setTextureRect(sf::IntRect(0, 0, windsz.x, windsz.y));
 
     //Font for displaying positions and other things
     boxFont.loadFromFile(keys.GetString("OBJECT_FONT"));
@@ -88,7 +88,7 @@ void TextureSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
             std::snprintf(buffer, 32, "[%.3d,%.3d]", (int)position.x, (int)position.y);
             sf::Text& text = tex->positionText;
             text.setString(buffer);
-            text.setPosition(position.x-25, position.y-8);
+            text.setPosition(position.x-28, position.y-8);
             window.draw(text);
         }
     }
@@ -106,8 +106,8 @@ void TextureSystem::retexture(entityx::Entity e)
         e.assign<TextureComponent>(sf::Sprite());
     }
 
-    /* Use the texturemap on the type the ent was spawned with to choose a random texure
-     * then the new texture needs to be scaled to the Box2D component */
+    /* Use the texturemap on the type the ent was spawned with to choose a random texure.
+     * Then, the new texture needs to be scaled to the Box2D component */
     auto textureComponent = e.component<TextureComponent>();
     auto spawnShape = e.component<SpawnComponent>()->type;
     auto& textureBank = texturemap.at(spawnShape).first;
