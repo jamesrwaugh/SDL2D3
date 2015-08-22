@@ -24,7 +24,8 @@ SOURCES += \
     ltbl/lighting/LightPointEmission.cpp \
     ltbl/lighting/LightDirectionEmission.cpp \
     ltbl/Math.cpp \
-    entityx/systems/TextureSystem.cpp
+    entityx/systems/TextureSystem.cpp \
+    utility.cpp
 
 HEADERS += \
     keyvalues.h \
@@ -44,7 +45,8 @@ HEADERS += \
     ltbl/lighting/LightPointEmission.h \
     ltbl/lighting/LightDirectionEmission.h \
     ltbl/Math.h \
-    entityx/systems/TextureSystem.h
+    entityx/systems/TextureSystem.h \
+    utility.h
 
 OTHER_FILES += \
     config.ini

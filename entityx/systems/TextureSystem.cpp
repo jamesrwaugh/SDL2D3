@@ -1,3 +1,4 @@
+#include "utility.h"
 #include "Box2DSystem.h"
 #include "TextureSystem.h"
 
@@ -11,8 +12,8 @@ TextureSystem::TextureSystem(sf::RenderWindow& rw, entityx::EntityManager& entit
     /* This doesn't change. It maps the type shape to the vector of textures aviliable
      * under random texturing, or we use the first for no random textures */
     texturemap = {
-        {    SpawnComponent::BOX, {&boxTextures,  Box2DSystem::box_halfwidth*2}},
-        { SpawnComponent::CIRCLE, {&ballTextures, Box2DSystem::circle_radius*2}}
+        {    SpawnComponent::BOX, {&boxTextures,  conf::box_halfwidth*2}},
+        { SpawnComponent::CIRCLE, {&ballTextures, conf::circle_radius*2}}
     };
 
     /* Textures for physics objects
@@ -76,19 +77,20 @@ void TextureSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
         (void)e;
         b2Body* body = box->body;
         b2Vec2  position = body->GetPosition();
+        sf::Vector2f adjusted = {pixels(position.x), pixels(position.y)};
 
         if(imageRenderEnabled) {
             sf::Sprite& sprite = tex->sprite;
-            sprite.setPosition(position.x, position.y);
+            sprite.setPosition(adjusted);
             sprite.setRotation(body->GetAngle() * (180 / M_PI));
             window.draw(sprite);
         }
         if(positionTextEnabled) {
             char buffer[32];
-            std::snprintf(buffer, 32, "[%.3d,%.3d]", (int)position.x, (int)position.y);
+            std::snprintf(buffer, 32, "[%.3d,%.3d]", (int)adjusted.x, (int)adjusted.y);
             sf::Text& text = tex->positionText;
             text.setString(buffer);
-            text.setPosition(position.x-28, position.y-8);
+            text.setPosition(adjusted.x-28, adjusted.y-8);
             window.draw(text);
         }
     }
@@ -125,7 +127,7 @@ void TextureSystem::scaleTexture(entityx::Entity e)
 {
     sf::Sprite& s = e.component<TextureComponent>()->sprite;
     auto type = e.component<SpawnComponent>()->type;
-    float scalar = texturemap[type].second;
+    float scalar = pixels(texturemap[type].second);
     auto texsize = s.getTexture()->getSize();
     s.setOrigin(texsize.x/2, texsize.y/2);
     s.setScale(1,1);

@@ -1,4 +1,5 @@
 #include <memory>
+#include "utility.h"
 #include "entityx/components.h"
 #include "Box2DSystem.h"
 
@@ -10,14 +11,15 @@ Box2DSystem::Box2DSystem(sf::RenderWindow& rw)
     world = std::make_unique<b2World>(b2Vec2(0,0));
 
     //Add static boxes to world to create walls around screen
-    int width  = window.getSize().x;
-    int height = window.getSize().y;
-    int halfwidth  = width  / 2;
-    int halfheight = height / 2;
-    createStaticBox(halfwidth, 10, halfwidth, 10);           //Top wall
-    createStaticBox(10, halfheight, 10, halfheight);         //Left wall
-    createStaticBox(width - 10, halfheight, 10, halfheight); //Right wall
-    createStaticBox(halfwidth, height - 10, halfwidth, 10);  //Bottom wall
+    float width  = meters(window.getSize().x);
+    float height = meters(window.getSize().y);
+    float halfwidth  = width  / 2;
+    float halfheight = height / 2;
+    const float wallsz = 15px;
+    createStaticBox(halfwidth, wallsz, halfwidth, wallsz);        //Top wall
+    createStaticBox(wallsz, halfheight, wallsz, halfheight);      //Left wall
+    createStaticBox(width-wallsz, halfheight, wallsz, halfheight);//Right wall
+    createStaticBox(halfwidth, height-wallsz, halfwidth, wallsz); //Bottom wall
 
     //Setup Debug draw and link to world
     drawer.setWindow(window);
@@ -93,24 +95,23 @@ void Box2DSystem::receive(const GraphicsEvent& e)
     }
 }
 
-b2Body* Box2DSystem::createStaticBox(int x, int y, int halfwidth, int halfheight)
+b2Body* Box2DSystem::createStaticBox(float x, float y, float halfwidth, float halfheight)
 {
     return createBody(x, y, halfwidth, halfheight, SpawnComponent::BOX, b2_staticBody);
 }
 
-b2Body* Box2DSystem::createDynamicBox(int x, int y, int halfwidth, int halfheight)
+b2Body* Box2DSystem::createDynamicBox(float x, float y, float halfwidth, float halfheight)
 {
     return createBody(x, y, halfwidth, halfheight, SpawnComponent::BOX, b2_dynamicBody);
 }
 
-b2Body* Box2DSystem::createSpawnComponentBody(int x, int y, SpawnComponent::TYPE type, b2BodyType btype)
+b2Body* Box2DSystem::createSpawnComponentBody(float x, float y, SpawnComponent::TYPE type, b2BodyType btype)
 {
-    float width = (type == SpawnComponent::BOX)
-            ? Box2DSystem::box_halfwidth : Box2DSystem::circle_radius;
+    float width = (type == SpawnComponent::BOX) ? conf::box_halfwidth : conf::circle_radius;
     return createBody(x, y, width, width, type, btype);
 }
 
-b2Body* Box2DSystem::createBody(int x, int y, float wx, float wy, SpawnComponent::TYPE type, b2BodyType btype)
+b2Body* Box2DSystem::createBody(float x, float y, float wx, float wy, SpawnComponent::TYPE type, b2BodyType btype)
 {
     b2Body*   body;
     b2BodyDef bodyDef;

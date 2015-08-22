@@ -17,6 +17,7 @@
 #ifndef SFMLDEBUGDRAW_H
 #define SFMLDEBUGDRAW_H
 
+#include "utility.h"
 #include <Box2D/Box2D.h>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -24,7 +25,7 @@
 
 namespace sfdd
 {
-    const float SCALE = 1.f;    //Scale of pixels per meter
+    const float SCALE = conf::ppm;    //Scale of pixels per meter
 }
 
 class SFMLDebugDraw : public b2Draw

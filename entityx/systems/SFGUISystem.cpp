@@ -1,6 +1,6 @@
-#include <unordered_map>
 #include <SFGUI/SFGUI.hpp>
 #include <SFGUI/Widgets.hpp>
+#include "utility.h"
 #include "Box2DSystem.h"
 #include "SFGUISystem.h"
 #include "entityx/events.h"
@@ -72,8 +72,8 @@ void SFGUISystem::createTheGUI()
         static std::vector<std::pair<sfg::Widget::Ptr, sf::Rect<sf::Uint32>>> placement = {
             {sfg::Label::Create("Gravity X"),    {0,0,1,1}},
             {sfg::Label::Create("Gravity Y"),    {1,0,1,1}},
-            {sfg::Scale::Create(-50,50,1),       {0,1,1,1}},
-            {sfg::Scale::Create(-50,50,1),       {1,1,1,1}},
+            {sfg::Scale::Create(-15,15,1),       {0,1,1,1}},
+            {sfg::Scale::Create(-15,15,1),       {1,1,1,1}},
             {sfg::Button::Create("Zero Gravity"),{0,2,2,1}}
         };
         //Paces each element in the table with their layouts
@@ -194,8 +194,8 @@ void SFGUISystem::onMouseClick(sf::Event::MouseButtonEvent click)
 
     //Converts global mouse position to a world position first
     sf::Vector2f adjusted = window.mapPixelToCoords({click.x, click.y});
-    click.x = adjusted.x;
-    click.y = adjusted.y;
+    click.x = meters(adjusted.x);
+    click.y = meters(adjusted.y);
 
     if(click.button == sf::Mouse::Button::Middle) {
         /* On a middle click, we want to remove the closest entity to the click position.
@@ -210,7 +210,7 @@ void SFGUISystem::onMouseClick(sf::Event::MouseButtonEvent click)
             });
         if(e.valid()) {
             b2Vec2 pos = e.component<Box2DComponent>()->body->GetPosition();
-            if(b2Distance(request, pos) < Box2DSystem::circle_radius*2)
+            if(b2Distance(request, pos) < conf::circle_radius*2)
                 entities.destroy(e.id());
         }
     } else {
@@ -240,7 +240,11 @@ void SFGUISystem::moveWindowView()
         {sf::Keyboard::Left, {-15,  0}},
         {sf::Keyboard::Right,{ 15,  0}},
         {sf::Keyboard::Up,   { 0, -15}},
-        {sf::Keyboard::Down, { 0,  15}}
+        {sf::Keyboard::Down, { 0,  15}},
+        {sf::Keyboard::A,    {-15,  0}},
+        {sf::Keyboard::D,    { 15,  0}},
+        {sf::Keyboard::W,    { 0, -15}},
+        {sf::Keyboard::S,    { 0,  15}}
     };
 
     for(const auto& entry : keyMoveMap) {

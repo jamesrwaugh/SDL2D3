@@ -1,4 +1,5 @@
 #include <array>
+#include "utility.h"
 #include "LTBLSystem.h"
 #include "Box2DSystem.h"
 #include "entityx/components.h"
@@ -66,7 +67,8 @@ void LTBLSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
             (void)e;
             sf::ConvexShape& s = light->light->_shape;
             b2Vec2 position = box->body->GetPosition();
-            s.setPosition(window.mapPixelToCoords({(int)position.x, (int)position.y}));
+            sf::Vector2f adjusted = {pixels(position.x), pixels(position.y)};
+            s.setPosition(window.mapPixelToCoords({(int)adjusted.x, (int)adjusted.y}));
             s.setRotation(box->body->GetAngle() * (180.0 / M_PI));
         }
         //Update the mouse light's position
@@ -88,8 +90,9 @@ void LTBLSystem::addToWorld(ex::Entity e)
 
     //Use the SpawnComponent to create a light with the right body and x/y points
     auto spawn = e.component<SpawnComponent>();
+
     if(spawn->type == SpawnComponent::BOX) {
-        float w = Box2DSystem::box_halfwidth * 2;
+        float w = pixels(conf::box_halfwidth * 2);
         sf::ConvexShape& light = lightShape->_shape;
         light.setPointCount(4);
         light.setPoint(0, {0, 0});
@@ -98,15 +101,18 @@ void LTBLSystem::addToWorld(ex::Entity e)
         light.setPoint(3, {w, 0});
         light.setOrigin({w/2, w/2});
     }
-    else {
-        //Circle requested; create circle shape and copy points out.
-        float radius = Box2DSystem::circle_radius;
+    else if(spawn->type == SpawnComponent::CIRCLE) {
+        //Circle requested; create SFML circle shape and copy points out.
+        float radius = pixels(conf::circle_radius);
         sf::CircleShape circle(radius, 15);
         int nPoints = circle.getPointCount();
         lightShape->_shape.setPointCount(nPoints);
         for(int i = 0; i != nPoints; ++i)
             lightShape->_shape.setPoint(i, circle.getPoint(i));
         lightShape->_shape.setOrigin(radius, radius);
+    }
+    else {
+        throw std::runtime_error("Spawn type not recognized");
     }
 
     lightShape->_shape.setPosition(spawn->x, spawn->y);
