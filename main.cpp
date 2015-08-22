@@ -29,6 +29,10 @@ SDL2D3::SDL2D3(int argc, char** argv)
     //Initialize our SFML window
     int width  = keys.GetInt("WIDTH");
     int height = keys.GetInt("HEIGHT");
+    if(width == 0 || height == 0) {
+        std::cerr << "Invalid Window width and height" << std::endl;
+        std::exit(1);
+    }
     auto style = sf::Style::Titlebar | sf::Style::Close;
     sf::ContextSettings settings;
     settings.antialiasingLevel = 4;
