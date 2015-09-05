@@ -48,7 +48,7 @@ void SFGUISystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt
     checkSliderEvents();
 
     //Handle view movement with keys
-    moveWindowView();
+    updateWindowView();
 
     //Updates and displays the GUI (also drawn last)
     gui_window->HandleEvent(event);
@@ -62,7 +62,8 @@ void SFGUISystem::createTheGUI()
     gui_window->SetTitle("Control Window");
     gui_window->SetRequisition(sf::Vector2f(200,100));
     gui_window->SetPosition(sf::Vector2f(200,200));
-
+    gui_window->GetSignal(sfg::Window::OnSizeAllocate)
+            .Connect(std::bind(&SFGUISystem::onWindowPosSizeChage, this));
     auto notebook = sfg::Notebook::Create();
 
     //The Box2D setting widgets; a table
@@ -135,10 +136,9 @@ void SFGUISystem::createTheGUI()
         //Layout table. This time it is Event Type -> {Widget,Layout}
         graphics = {
             {GraphicsEvent::ImageRender,    {sfg::CheckButton::Create("Image Render"),    {0, 0, 1, 1}}},
-            {GraphicsEvent::WindowCollision,{sfg::CheckButton::Create("Window Collision"),{0, 1, 1, 1}}},
-            {GraphicsEvent::ShowPositions,  {sfg::CheckButton::Create("Show Positions"),  {1, 1, 1, 1}}},
-            {GraphicsEvent::ShowAAABs,      {sfg::CheckButton::Create("Show AABBs"),      {0, 2, 1, 1}}},
-            {GraphicsEvent::RandomTextures, {sfg::CheckButton::Create("Random Textures"), {1, 2, 1, 1}}}
+            {GraphicsEvent::ShowPositions,  {sfg::CheckButton::Create("Show Positions"),  {0, 1, 1, 1}}},
+            {GraphicsEvent::ShowAAABs,      {sfg::CheckButton::Create("Show AABBs"),      {1, 0, 1, 1}}},
+            {GraphicsEvent::RandomTextures, {sfg::CheckButton::Create("Random Textures"), {1, 1, 1, 1}}}
         };
         //Put all button in table, and set up event when clicked
         auto table = sfg::Table::Create();
@@ -183,6 +183,12 @@ void SFGUISystem::onMouseWheelScrolled(sf::Event::MouseWheelScrollEvent scroll)
         float direction = std::copysign(0.1, scroll.delta);
         view.zoom(1.0 - direction);
         window.setView(view);
+
+        //Inform rest of code
+        GraphicsEvent e(GraphicsEvent::WindowZoomed);
+        e.delta = direction;
+        std::cout << direction;
+        events.emit<GraphicsEvent>(e);
     }
 }
 
@@ -222,7 +228,7 @@ void SFGUISystem::onMouseClick(sf::Event::MouseButtonEvent click)
         } else if(sf::Mouse::Button::Right) {
             type = SpawnComponent::CIRCLE;
         } else {
-            throw std::runtime_error("Unknown mouse button clicked");
+            //Do nothing
         }
         ex::Entity e = entities.create();
         e.assign<SpawnComponent>(click.x, click.y, type);
@@ -234,7 +240,7 @@ void SFGUISystem::onKeyPressed(sf::Event::KeyEvent)
 
 }
 
-void SFGUISystem::moveWindowView()
+void SFGUISystem::updateWindowView()
 {
     static std::map<sf::Keyboard::Key, sf::Vector2f> keyMoveMap = {
         {sf::Keyboard::Left, {-15,  0}},
@@ -258,6 +264,10 @@ void SFGUISystem::moveWindowView()
 
 void SFGUISystem::resetWindowView()
 {
+    //Inform the rest of the code first
+    events.emit<GraphicsEvent>(GraphicsEvent::WindowZoomReset);
+
+    //Now reset the view
     window.setView(window.getDefaultView());
 }
 
@@ -268,20 +278,32 @@ void SFGUISystem::checkSliderEvents()
     sf::Vector2f newGrav { gravx->GetValue(), gravy->GetValue() };
     if(newGrav != storedGrav) {
         storedGrav = newGrav;
-        events.emit<GravityChangeEvent>(storedGrav.x, storedGrav.y);
+        PhysicsEvent e(PhysicsEvent::GravityChange);
+        e.grav = b2Vec2(storedGrav.x, storedGrav.y);
+        events.emit<PhysicsEvent>(e);
     }
 
     //Checks for changes in the RGB light-color sliders
     sf::Color newColor {(sf::Uint8)colorr->GetValue(), (sf::Uint8)colorg->GetValue(), (sf::Uint8)colorb->GetValue()};
     if(newColor != storedColor) {
         storedColor = newColor;
-        events.emit<LightColorEvent>(newColor);
+        LightEvent e(LightEvent::Color);
+        e.color = storedColor;
+        events.emit<LightEvent>(e);
     }
+}
+
+void SFGUISystem::onWindowPosSizeChage()
+{
+    GraphicsEvent e(GraphicsEvent::GuiWindowChange);
+    e.alloc = gui_window->GetAllocation();
+    events.emit<GraphicsEvent>(e);
 }
 
 void SFGUISystem::lightReloadEvent()
 {
-    events.emit<LightReloadEvent>();
+    LightEvent e(LightEvent::Reload);
+    events.emit<LightEvent>(e);
 }
 
 void SFGUISystem::destroyAllEntities()

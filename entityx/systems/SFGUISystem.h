@@ -44,7 +44,8 @@ private:
     void onMouseClick(sf::Event::MouseButtonEvent);
     void onKeyPressed(sf::Event::KeyEvent);
     void onMouseWheelScrolled(sf::Event::MouseWheelScrollEvent);
-    void moveWindowView();
+    void onWindowPosSizeChage();
+    void updateWindowView();
     void resetWindowView();
     void lightReloadEvent();
     void graphicsEvent(const GraphicsEntry& entry);

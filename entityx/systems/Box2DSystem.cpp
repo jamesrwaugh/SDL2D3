@@ -4,22 +4,16 @@
 #include "Box2DSystem.h"
 
 Box2DSystem::Box2DSystem(sf::RenderWindow& rw)
-    : window(rw)
+    : windowBody(nullptr)
+    , window(rw)
     , debugEnabled(true)
+    , windowCollisionEnabled(false)
 {
     //Create world, initially 0 gravity
     world = std::make_unique<b2World>(b2Vec2(0,0));
 
     //Add static boxes to world to create walls around screen
-    float width  = meters(window.getSize().x);
-    float height = meters(window.getSize().y);
-    float halfwidth  = width  / 2;
-    float halfheight = height / 2;
-    const float wallsz = 15px;
-    createStaticBox(halfwidth, wallsz, halfwidth, wallsz);        //Top wall
-    createStaticBox(wallsz, halfheight, wallsz, halfheight);      //Left wall
-    createStaticBox(width-wallsz, halfheight, wallsz, halfheight);//Right wall
-    createStaticBox(halfwidth, height-wallsz, halfwidth, wallsz); //Bottom wall
+    addWallsOnScreen();
 
     //Setup Debug draw and link to world
     drawer.setWindow(window);
@@ -43,41 +37,28 @@ void Box2DSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt
     }
 }
 
-void Box2DSystem::addToWorld(ex::Entity e)
-{
-    //Get the spawn info and add an actual b2Body to the world
-    auto spawn = e.component<SpawnComponent>();
-    b2Body* body = createSpawnComponentBody(spawn->x, spawn->y, spawn->type, b2_dynamicBody);
-
-    //Store it in the EntityX system
-    e.assign<Box2DComponent>(body);
-}
-
 void Box2DSystem::configure(ex::EventManager& events)
 {
-    events.subscribe<GravityChangeEvent>(*this);
-    events.subscribe<GraphicsEvent>(*this);
     events.subscribe<ex::ComponentAddedEvent<SpawnComponent>>(*this);
     events.subscribe<ex::EntityDestroyedEvent>(*this);
+    events.subscribe<PhysicsEvent>(*this);
+    events.subscribe<GraphicsEvent>(*this);
 }
 
-void Box2DSystem::receive(const GravityChangeEvent& ge)
+void Box2DSystem::receive(const PhysicsEvent& e)
 {
-    world->SetGravity(b2Vec2(ge.x, ge.y));
-}
-
-void Box2DSystem::receive(const entityx::ComponentAddedEvent<SpawnComponent>& e)
-{
-    /* Event listener to add a Box2D component when an entity is spawned */
-    unspawned.push_back(e.entity);
-}
-
-void Box2DSystem::receive(const ex::EntityDestroyedEvent& e)
-{
-    /* We only care if a Box2DComponent ent has been removed.
-     * If one has, we remove it from the b2World. */
-    if(e.entity.has_component<Box2DComponent>())
-        world->DestroyBody(e.entity.component<const Box2DComponent>()->body);
+    switch(e.type)
+    {
+    case PhysicsEvent::GravityChange:
+        world->SetGravity(e.grav);
+        break;
+    case PhysicsEvent::WindowCollision:
+        windowCollisionEnabled = e.value;
+        toggleWindowCollision();
+        break;
+    default:
+        break;
+    }
 }
 
 void Box2DSystem::receive(const GraphicsEvent& e)
@@ -90,9 +71,64 @@ void Box2DSystem::receive(const GraphicsEvent& e)
     case GraphicsEvent::ShowAAABs:
         drawer.SetFlags(drawer.GetFlags() ^ b2Draw::e_aabbBit);
         break;
+    case GraphicsEvent::GuiWindowChange:
+        std::cout << e.alloc.top   << " " << e.alloc.left   << " "
+                  << e.alloc.width << " " << e.alloc.height << std::endl;
+        if(windowCollisionEnabled && windowBody != nullptr) {
+
+        }
     default:
         break;
     }
+}
+
+void Box2DSystem::receive(const entityx::ComponentAddedEvent<SpawnComponent>& e)
+{
+    //Event listener to add a Box2D component when an entity is spawned
+    unspawned.push_back(e.entity);
+}
+
+void Box2DSystem::receive(const ex::EntityDestroyedEvent& e)
+{
+    /* We only care if a Box2DComponent ent has been removed.
+     * If one has, we remove it from the b2World. */
+    if(e.entity.has_component<Box2DComponent>())
+        world->DestroyBody(e.entity.component<const Box2DComponent>()->body);
+}
+
+void Box2DSystem::addToWorld(ex::Entity e)
+{
+    //Get the spawn info and add an actual b2Body to the world
+    auto spawn = e.component<SpawnComponent>();
+    b2Body* body = createSpawnComponentBody(spawn->x, spawn->y, spawn->type, b2_dynamicBody);
+
+    //Store it in the EntityX system
+    e.assign<Box2DComponent>(body);
+}
+
+void Box2DSystem::toggleWindowCollision()
+{
+   if(windowCollisionEnabled) {
+       world->DestroyBody(windowBody);
+       windowBody = createBody(0, 0, 100, 100, SpawnComponent::BOX, b2_dynamicBody);
+       windowBody->SetFixedRotation(true);
+   } else {
+        world->DestroyBody(windowBody);
+        windowBody = nullptr;
+   }
+}
+
+void Box2DSystem::addWallsOnScreen()
+{
+    float width  = meters(window.getSize().x);
+    float height = meters(window.getSize().y);
+    float halfwidth  = width  / 2;
+    float halfheight = height / 2;
+    const float wallsz = 15px;
+    createStaticBox(halfwidth, wallsz, halfwidth, wallsz);        //Top wall
+    createStaticBox(wallsz, halfheight, wallsz, halfheight);      //Left wall
+    createStaticBox(width-wallsz, halfheight, wallsz, halfheight);//Right wall
+    createStaticBox(halfwidth, height-wallsz, halfwidth, wallsz); //Bottom wall
 }
 
 b2Body* Box2DSystem::createStaticBox(float x, float y, float halfwidth, float halfheight)
@@ -134,7 +170,7 @@ b2Body* Box2DSystem::createBody(float x, float y, float wx, float wy, SpawnCompo
         fix.shape = &circle;
     }
     else {
-        throw std::runtime_error("This type is not implemented");
+        throw std::runtime_error("This Spawn type is not implemented");
     }
 
     body->CreateFixture(&fix);
@@ -142,3 +178,5 @@ b2Body* Box2DSystem::createBody(float x, float y, float wx, float wy, SpawnCompo
 
     return body;
 }
+
+

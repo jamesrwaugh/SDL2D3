@@ -27,9 +27,8 @@ public:
     void configure(ex::EventManager& events) override;
     void receive(const ex::ComponentAddedEvent<SpawnComponent>&);
     void receive(const ex::EntityDestroyedEvent&);
-    void receive(const LightColorEvent&);
-    void receive(const LightReloadEvent&);
-    void receive(const GraphicsEvent&);
+    void receive(const LightEvent& e);
+    void receive(const GraphicsEvent& e);
     void receive(const sf::Event &e);
 
 private:
@@ -39,6 +38,9 @@ private:
 
     //Add an entity to the light system (assuming a SpawnComponent is present)
     void addToWorld(ex::Entity e);
+
+    //Scale all light shapes by adding some delta. Absolute for setScale, not scale
+    void scaleAllEntities(float delta, bool absolute = false);
 
 private:
     //Light textures

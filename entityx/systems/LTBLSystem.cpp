@@ -83,6 +83,90 @@ void LTBLSystem::update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta)
     }
 }
 
+void LTBLSystem::configure(ex::EventManager& events)
+{
+    events.subscribe<ex::ComponentAddedEvent<SpawnComponent>>(*this);
+    events.subscribe<ex::EntityDestroyedEvent>(*this);
+    events.subscribe<sf::Event>(*this);
+    events.subscribe<LightEvent>(*this);
+    events.subscribe<GraphicsEvent>(*this);
+}
+
+void LTBLSystem::receive(const LightEvent& e)
+{
+    switch(e.type)
+    {
+    case LightEvent::Color:
+        mouselight->_emissionSprite.setColor(e.color);
+        break;
+    case LightEvent::Enabled:
+        lighingEnabled = e.value;
+        break;
+    case LightEvent::MouseEnabled:
+        if(e.value) {
+            ls->addLight(mouselight);
+        } else {
+            ls->removeLight(mouselight);
+        }
+        break;
+    case LightEvent::Reload:
+        loadSetupLightSystem();
+        for(ex::Entity e : entities.entities_with_components<Box2DComponent>())
+            addToWorld(e);
+        break;
+    default:
+        break;
+    }
+}
+
+void LTBLSystem::receive(const GraphicsEvent& e)
+{
+    switch(e.type)
+    {
+    case GraphicsEvent::WindowZoomed: {
+        float direction = std::copysign(0.1, -e.delta);
+        scaleAllEntities(direction, false);
+        break;
+    }
+    case GraphicsEvent::WindowZoomReset: {
+        scaleAllEntities(1, true);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void LTBLSystem::receive(const ex::ComponentAddedEvent<SpawnComponent>& e)
+{
+    unspawned.push_back(e.entity);
+}
+
+void LTBLSystem::receive(const ex::EntityDestroyedEvent& e)
+{
+    if(e.entity.has_component<LTBLComponent>())
+        ls->removeShape(e.entity.component<const LTBLComponent>()->light);
+}
+
+void LTBLSystem::receive(const sf::Event &e)
+{
+    switch(e.type)
+    {
+    case sf::Event::MouseWheelScrolled: {
+        if(sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+            //Change size of light when scrolled and CTRL
+            sf::Vector2f scale = mouselight->_emissionSprite.getScale();
+            float delta = e.mouseWheelScroll.delta;
+            mouselight->_emissionSprite.setScale(scale + sf::Vector2f(delta,delta));
+            mouselight->_sourceRadius += delta;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void LTBLSystem::addToWorld(ex::Entity e)
 {
     //Create an initial light shape...
@@ -128,81 +212,15 @@ void LTBLSystem::addToWorld(ex::Entity e)
     ls->addShape(lightShape);
 }
 
-void LTBLSystem::configure(ex::EventManager& events)
+void LTBLSystem::scaleAllEntities(float delta, bool absolute)
 {
-    events.subscribe<ex::ComponentAddedEvent<SpawnComponent>>(*this);
-    events.subscribe<ex::EntityDestroyedEvent>(*this);
-    events.subscribe<sf::Event>(*this);
-    events.subscribe<LightReloadEvent>(*this);
-    events.subscribe<LightColorEvent>(*this);
-}
-
-void LTBLSystem::receive(const ex::ComponentAddedEvent<SpawnComponent>& e)
-{
-    unspawned.push_back(e.entity);
-}
-
-void LTBLSystem::receive(const ex::EntityDestroyedEvent& e)
-{
-    if(e.entity.has_component<LTBLComponent>())
-        ls->removeShape(e.entity.component<const LTBLComponent>()->light);
-}
-
-void LTBLSystem::receive(const LightColorEvent &e)
-{
-    mouselight->_emissionSprite.setColor(e.color);
-}
-
-void LTBLSystem::receive(const LightReloadEvent&)
-{
-    loadSetupLightSystem();
-    for(ex::Entity e : entities.entities_with_components<Box2DComponent>()) {
-        addToWorld(e);
-    }
-}
-
-void LTBLSystem::receive(const GraphicsEvent& e)
-{
-    switch(e.type)
-    {
-    case GraphicsEvent::LightEnabled:
-        lighingEnabled = e.value;
-        break;
-    case GraphicsEvent::LightMouseEnabled:
-        if(e.value) {
-            ls->addLight(mouselight);
+    ex::ComponentHandle<LTBLComponent> light;
+    for(ex::Entity e : entities.entities_with_components(light)) {
+        (void)e;
+        if(absolute) {
+             light->light->_shape.setScale(delta, delta);
         } else {
-            ls->removeLight(mouselight);
+             light->light->_shape.scale(1.0 + delta, 1.0 + delta);
         }
-        break;
-    default:
-        break;
-    }
-}
-
-void LTBLSystem::receive(const sf::Event &e)
-{
-    switch(e.type)
-    {
-    case sf::Event::MouseWheelScrolled: {
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
-            //Change size of light when scrolled and CTRL
-            sf::Vector2f scale = mouselight->_emissionSprite.getScale();
-            float delta = e.mouseWheelScroll.delta;
-            mouselight->_emissionSprite.setScale(scale + sf::Vector2f(delta,delta));
-            mouselight->_sourceRadius += delta;
-        } else {
-            //With no CTRL, we are zooming the view. Update light sprite scales
-            ex::ComponentHandle<LTBLComponent> light;
-            float direction = std::copysign(0.1, e.mouseWheelScroll.delta);
-            for(ex::Entity e : entities.entities_with_components(light)) {
-                (void)e;
-                light->light->_shape.scale(1.0 - direction, 1.0 - direction);
-            }
-        }
-        break;
-    }
-    default:
-        break;
     }
 }

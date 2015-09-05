@@ -3,7 +3,6 @@
 #include <SFML/Graphics.hpp>
 #include <entityx/entityx.h>
 #include <Box2D/Box2D.h>
-
 #include "box2d/SFMLDebugDraw.h"
 #include "entityx/events.h"
 #include "entityx/components.h"
@@ -25,28 +24,32 @@ public:
 
     //EntityX event listeners
     void configure(ex::EventManager& events) override;
-    void receive(const GravityChangeEvent& ge);
     void receive(const entityx::ComponentAddedEvent<SpawnComponent>& e);
     void receive(const entityx::EntityDestroyedEvent& e);
+    void receive(const PhysicsEvent& e);
     void receive(const GraphicsEvent& e);
 
 private:
-    //Utility functions to create b2 bodies
+    //Event listeners and handlers
     void addToWorld(ex::Entity e);
+    void addWallsOnScreen();
+    void toggleWindowCollision();
+
+    //Utility functions to create b2 bodies
     b2Body* createStaticBox(float x, float y, float halfwidth, float halfheight);
     b2Body* createDynamicBox(float x, float y, float halfwidth, float halfheight);
     b2Body* createDynamicCircle(float x, float y, int radius);
     b2Body* createSpawnComponentBody(float x, float y, SpawnComponent::TYPE type, b2BodyType btype);
     b2Body* createBody(float x, float y, float wx, float wy, SpawnComponent::TYPE type, b2BodyType btype);
 
-    //World information
-    std::list<ex::Entity> unspawned;
-    std::unique_ptr<b2World> world;
-    SFMLDebugDraw drawer;  
-    sf::RenderWindow& window;
-
-    //State data. Just used to render Box2D debug or not
+    //World information and state data
+    std::unique_ptr<b2World> world;     //The World.
+    b2Body* windowBody;                 //Body for the SFGUI window
+    std::list<ex::Entity> unspawned;    //Entities added by EntityX not yet given a b2Body
+    SFMLDebugDraw drawer;               //DebugDraw instance
+    sf::RenderWindow& window;           //Reference to the render window
     bool debugEnabled;
+    bool windowCollisionEnabled;
 };
 
 #endif

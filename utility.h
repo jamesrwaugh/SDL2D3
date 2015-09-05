@@ -4,7 +4,7 @@
 namespace conf {
 
 //Conversion factors for pixels to MKS
-static constexpr float ppm = 20.f;            //Pixels-Per-Meter
+static constexpr float ppm = 15.f;            //Pixels-Per-Meter
 static constexpr float mpp = 1.f/ppm;         //Meters-Per-Pixel
 
 //Dimentions of spawned entities
