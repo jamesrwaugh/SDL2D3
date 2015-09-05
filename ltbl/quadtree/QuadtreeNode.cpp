@@ -7,10 +7,13 @@
 using namespace ltbl;
 
 QuadtreeNode::QuadtreeNode(const sf::FloatRect &region, int level, QuadtreeNode* pParent, Quadtree* pQuadtree)
-: _hasChildren(false),
-_region(region), _level(level), _pParent(pParent), _pQuadtree(pQuadtree),
-_numOccupantsBelow(0)
-{}
+: _pParent(pParent),
+  _pQuadtree(pQuadtree),
+  _hasChildren(false),
+  _region(region),
+  _level(level),
+  _numOccupantsBelow(0)
+{ }
 
 void QuadtreeNode::create(const sf::FloatRect &region, int level, QuadtreeNode* pParent, Quadtree* pQuadtree) {
 	_hasChildren = false;
