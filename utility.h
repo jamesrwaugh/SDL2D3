@@ -20,6 +20,6 @@ float meters(int pixels);
 float pixels(long double meters);
 
 //Allows literals like 10px, which convert to the meter value
-float operator"" px(unsigned long long int _pixels);
+float operator"" _px(unsigned long long int _pixels);
 
 #endif // UTILITY_H

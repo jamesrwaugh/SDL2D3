@@ -10,6 +10,6 @@ float pixels(long double meters)
     return meters * conf::ppm;
 }
 
-float operator"" px(unsigned long long int _pixels) {
+float operator"" _px(unsigned long long int _pixels) {
     return meters(_pixels);
 }

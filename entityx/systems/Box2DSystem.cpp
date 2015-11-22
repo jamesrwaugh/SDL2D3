@@ -124,7 +124,7 @@ void Box2DSystem::addWallsOnScreen()
     float height = meters(window.getSize().y);
     float halfwidth  = width  / 2;
     float halfheight = height / 2;
-    const float wallsz = 15px;
+    const float wallsz = 15_px;
     createStaticBox(halfwidth, wallsz, halfwidth, wallsz);        //Top wall
     createStaticBox(wallsz, halfheight, wallsz, halfheight);      //Left wall
     createStaticBox(width-wallsz, halfheight, wallsz, halfheight);//Right wall
