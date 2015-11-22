@@ -52,6 +52,6 @@ namespace ltbl {
 
 		friend class QuadtreeNode;
 		friend class SceneObject;
-        friend class QuadtreeOccupant;
+		friend class QuadtreeOccupant;
 	};
 }

@@ -1,11 +1,13 @@
 TEMPLATE = app
-CONFIG += console c++14
+CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
-QMAKE_CXXFLAGS += -std=c++14 -Wno-extra -Wno-sign-compare
+QMAKE_CXXFLAGS += -std=c++14
 QMAKE_INCDIR += lbtl/
 unix|win32: LIBS += -lsfml-system -lsfml-window -lsfml-graphics -lsfgui -lBox2D -lGL -lentityx
 
+Release:DESTDIR = ..
+Debug:DESTDIR = ..
 
 SOURCES += \
     main.cpp \

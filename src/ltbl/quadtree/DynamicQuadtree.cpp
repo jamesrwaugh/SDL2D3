@@ -1,4 +1,5 @@
 #include <ltbl/quadtree/DynamicQuadtree.h>
+
 #include <assert.h>
 
 using namespace ltbl;

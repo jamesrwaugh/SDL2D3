@@ -22,9 +22,9 @@ namespace ltbl {
 			_pRootNode = std::make_unique<QuadtreeNode>(rootRegion, 0, nullptr, this);
 		}
 
-        //DynamicQuadtree(const DynamicQuadtree &other) {
-        //    *this = other;
-        //}
+		DynamicQuadtree(const DynamicQuadtree &other) : Quadtree(other) {
+			*this = other;
+		}
 
 		void operator=(const DynamicQuadtree &other);
 

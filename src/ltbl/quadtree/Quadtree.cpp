@@ -24,7 +24,7 @@ void Quadtree::operator=(const Quadtree &other) {
 	if (other._pRootNode != nullptr) {
 		_pRootNode.reset(new QuadtreeNode());
 
-        recursiveCopy(_pRootNode.get(), other._pRootNode.get(), nullptr);
+		recursiveCopy(_pRootNode.get(), other._pRootNode.get(), nullptr);
 	}
 }
 
@@ -33,7 +33,7 @@ void Quadtree::setQuadtree(QuadtreeOccupant* oc) {
 }
 
 void Quadtree::recursiveCopy(QuadtreeNode* pThisNode, QuadtreeNode* pOtherNode, QuadtreeNode* pThisParent) {
-    pThisNode->_hasChildren = pOtherNode->_hasChildren;
+	pThisNode->_hasChildren = pOtherNode->_hasChildren;
 	pThisNode->_level = pOtherNode->_level;
 	pThisNode->_numOccupantsBelow = pOtherNode->_numOccupantsBelow;
 	pThisNode->_occupants = pOtherNode->_occupants;
@@ -66,8 +66,6 @@ void Quadtree::queryRegion(std::vector<QuadtreeOccupant*> &result, const sf::Flo
 	// Query outside root elements
 	for (std::unordered_set<QuadtreeOccupant*>::iterator it = _outsideRoot.begin(); it != _outsideRoot.end(); it++) {
 		QuadtreeOccupant* oc = *it;
-        //sf::FloatRect r = oc->getAABB();
-
 		if (oc != nullptr && region.intersects(oc->getAABB()))
 			// Intersects, add to list
 			result.push_back(oc);
