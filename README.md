@@ -8,6 +8,7 @@ A project combining SFML Box2D LTBL2 SFGUI and EntityX
 ##Requirements
 - SFML 2.2+ (http://www.sfml-dev.org/download.php)
 - EntityX (https://github.com/alecthomas/entityx)
+- Box2D (https://github.com/erincatto/Box2D)
 - SFGUI 0.30 (http://sfgui.sfml-dev.de/download/)
 
 Currently LTBL2 in included in the sources.
