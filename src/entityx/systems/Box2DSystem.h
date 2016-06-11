@@ -19,6 +19,8 @@ public:
     //Initizlize with a RenderWindow so we can create walls around it
     Box2DSystem(sf::RenderWindow& rw);
 
+public:
+    /** EntityX Interfaces **/
     //Steps the Box2D world and draws shapes
     void update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt) override;
 

@@ -17,6 +17,8 @@ class TextureSystem : public ex::System<TextureSystem>, public ex::Receiver<Text
 public:
     TextureSystem(sf::RenderWindow& rw,  ex::EntityManager& entities, KeyValue& keys);
 
+public:
+    /** EntityX Interfaces **/
     //Updating is drawing textures all over the Box2D objects
     void update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta) override;
 
@@ -39,7 +41,7 @@ private:
     sf::Sprite bgSprite;
     sf::Font boxFont;
 
-    //Figure out textures for an entity, and untextures entities
+    //Figure out textures for an entity, and handle untextures entities
     void addToWorld(ex::Entity e);
     void retexture(ex::Entity e);
     void scaleTexture(ex::Entity e);

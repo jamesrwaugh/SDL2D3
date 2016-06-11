@@ -1,5 +1,6 @@
 # SDL2D3
-A project combining SFML Box2D LTBL2 SFGUI and EntityX
+A project combining SFML Box2D LTBL2 SFGUI and EntityX.
+The primary purpose of this project is an example of combining the libraries in a small sandbox.
 
 ![Alt Text](sdl2d3_0.jpg)
 ==================

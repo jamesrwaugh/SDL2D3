@@ -19,6 +19,8 @@ public:
     //Creates light system; Renderwindow and keyValue to load shaders and textures
     LTBLSystem(sf::RenderWindow& rw, ex::EntityManager& entities, KeyValue& keys);
 
+public:
+    /** EntityX Interfaces **/
     //Updates and draws the light system
     void update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta) override;
 

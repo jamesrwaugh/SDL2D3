@@ -17,6 +17,8 @@ class SFGUISystem : public ex::System<SFGUISystem>
 public:
     SFGUISystem(sf::RenderWindow& rw, ex::EntityManager& entities, ex::EventManager& events);
 
+public:
+    /** EntityX Interfaces **/
     //Draw the GUI and etc, and emit events if needed
     void update(ex::EntityManager&, ex::EventManager&, ex::TimeDelta dt) override;
 
@@ -52,7 +54,6 @@ private:
     void destroyAllEntities();
 
 private:
-    sf::Sprite cursor;              //Cursor sprite
     ex::EntityManager& entities;    //EntityX convience items
     ex::EventManager& events;
 };
