@@ -1,4 +1,4 @@
-#include "utility.h"
+#include "utility/utility.h"
 #include "Box2DSystem.h"
 #include "TextureSystem.h"
 

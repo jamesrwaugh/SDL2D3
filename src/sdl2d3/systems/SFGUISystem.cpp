@@ -1,10 +1,10 @@
 #include <SFGUI/SFGUI.hpp>
 #include <SFGUI/Widgets.hpp>
-#include "utility.h"
+#include "utility/utility.h"
+#include "sdl2d3/events.h"
+#include "sdl2d3/components.h"
 #include "Box2DSystem.h"
 #include "SFGUISystem.h"
-#include "entityx/events.h"
-#include "entityx/components.h"
 
 SFGUISystem::SFGUISystem(sf::RenderWindow& rw, ex::EntityManager& entities, ex::EventManager& events)
     : window(rw)

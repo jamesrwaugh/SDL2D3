@@ -1,0 +1,12 @@
+[submodule "src/extlibs/Box2D"]
+	path = src/extlibs/Box2D
+	url = https://github.com/erincatto/Box2D.git
+
+[submodule "src/extlibs/LTBL2"]
+	path = src/extlibs/LTBL2
+	url = https://github.com/222464/LTBL2.git
+
+[submodule "src/extlibs/entityx"]
+	path = src/extlibs/entityx
+	url = https://github.com/alecthomas/entityx.git
+

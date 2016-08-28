@@ -33,3 +33,6 @@
 #QT Creator
 *.pro.user
 
+#VsCode
+.vscode/
+

@@ -1,6 +1,6 @@
 #include <memory>
-#include "utility.h"
-#include "entityx/components.h"
+#include "utility/utility.h"
+#include "sdl2d3/components.h"
 #include "Box2DSystem.h"
 
 Box2DSystem::Box2DSystem(sf::RenderWindow& rw)
@@ -72,8 +72,9 @@ void Box2DSystem::receive(const GraphicsEvent& e)
         drawer.SetFlags(drawer.GetFlags() ^ b2Draw::e_aabbBit);
         break;
     case GraphicsEvent::GuiWindowChange:
-        std::cout << e.alloc.top   << " " << e.alloc.left   << " "
-                  << e.alloc.width << " " << e.alloc.height << std::endl;
+    	//TODO? Window collison like SDL2D2
+        //std::cout << e.alloc.top   << " " << e.alloc.left   << " "
+        //          << e.alloc.width << " " << e.alloc.height << std::endl;
         if(windowCollisionEnabled && windowBody != nullptr) {
 
         }

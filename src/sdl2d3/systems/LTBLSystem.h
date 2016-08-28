@@ -3,9 +3,9 @@
 
 #include <entityx/entityx.h>
 #include <ltbl/lighting/LightSystem.h>
-#include "keyvalues.h"
-#include "entityx/events.h"
-#include "entityx/components.h"
+#include "utility/keyvalues.h"
+#include "sdl2d3/events.h"
+#include "sdl2d3/components.h"
 namespace ex = entityx;
 
 /* The Let There Be Light system creates a light system and updates it

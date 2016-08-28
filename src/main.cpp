@@ -1,12 +1,12 @@
 #include <SFML/Graphics.hpp>
 #include <entityx/entityx.h>
-#include "keyvalues.h"
+#include "utility/keyvalues.h"
 
 //Entity X systems
-#include "entityx/systems/Box2DSystem.h"
-#include "entityx/systems/SFGUISystem.h"
-#include "entityx/systems/LTBLSystem.h"
-#include "entityx/systems/TextureSystem.h"
+#include "sdl2d3/systems/Box2DSystem.h"
+#include "sdl2d3/systems/SFGUISystem.h"
+#include "sdl2d3/systems/LTBLSystem.h"
+#include "sdl2d3/systems/TextureSystem.h"
 
 class SDL2D3 : public entityx::EntityX
 {

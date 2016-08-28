@@ -14,10 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+//[TehPwns] This is a modified version for SDL2D3. Notably, the use if conf::ppm, setWindow,
+//and the new DrawPoint function from Box2D
+
 #ifndef SFMLDEBUGDRAW_H
 #define SFMLDEBUGDRAW_H
 
-#include "utility.h"
+#include "utility/utility.h"
 #include <Box2D/Box2D.h>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -50,6 +53,9 @@ public:
 	}
 
 public:
+	// Draw a point (New).
+	void DrawPoint(const b2Vec2& p, float32 size, const b2Color& color);
+
 	/// Draw a closed polygon provided in CCW order.
 	void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
 

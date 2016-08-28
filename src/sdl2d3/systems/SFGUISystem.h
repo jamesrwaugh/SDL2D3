@@ -5,7 +5,7 @@
 #include <SFGUI/SFGUI.hpp>
 #include <SFML/Graphics.hpp>
 #include <entityx/entityx.h>
-#include "entityx/events.h"
+#include "sdl2d3/events.h"
 namespace ex = entityx;
 
 /* The SFGUI system creates the GUI window, and emits all events to EntityX

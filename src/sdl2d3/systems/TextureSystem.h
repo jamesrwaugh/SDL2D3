@@ -3,9 +3,9 @@
 
 #include <map>
 #include <entityx/entityx.h>
-#include "keyvalues.h"
-#include "entityx/events.h"
-#include "entityx/components.h"
+#include "utility/keyvalues.h"
+#include "sdl2d3/events.h"
+#include "sdl2d3/components.h"
 namespace ex = entityx;
 
 /* The texture system takes the world entities (with Box2DLTBLComponent)

@@ -16,6 +16,11 @@
 
 #include "SFMLDebugDraw.h"
 
+void SFMLDebugDraw::DrawPoint(const b2Vec2&, float32, const b2Color&)
+{
+	//I don't think this is used in the scope of DebugDraw used by SDL2D3
+}
+
 void SFMLDebugDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color) 
 {
 	sf::ConvexShape polygon(vertexCount);

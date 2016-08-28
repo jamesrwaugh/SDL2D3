@@ -3,10 +3,10 @@
 #include <SFML/Graphics.hpp>
 #include <entityx/entityx.h>
 #include <Box2D/Box2D.h>
-#include "box2d/SFMLDebugDraw.h"
-#include "entityx/events.h"
-#include "entityx/components.h"
-#include "keyvalues.h"
+#include "sdl2d3/events.h"
+#include "sdl2d3/components.h"
+#include "utility/SFMLDebugDraw.h"
+#include "utility/keyvalues.h"
 namespace ex = entityx;
 
 /* The Box2D System is to manage the Box2D world and receive events from the GUI

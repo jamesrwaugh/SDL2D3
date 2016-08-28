@@ -1,8 +1,8 @@
 #include <array>
-#include "utility.h"
+#include "utility/utility.h"
+#include "sdl2d3/components.h"
 #include "LTBLSystem.h"
 #include "Box2DSystem.h"
-#include "entityx/components.h"
 
 LTBLSystem::LTBLSystem(sf::RenderWindow& rw, entityx::EntityManager& entities, KeyValue& keys)
     : lighingEnabled(true)
