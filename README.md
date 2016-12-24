@@ -8,7 +8,6 @@ The primary purpose of this project is an example of combining the libraries in 
 
 ## Requirements
 SFML and SFGUI are requred to be installed beforehand, while EntityX, Box2D and LTBL2 are included as submodules.
-
 - SFML 2.2+ (http://www.sfml-dev.org/download.php)
 - SFGUI 0.30+ (http://sfgui.sfml-dev.de/download/)
 
@@ -18,7 +17,7 @@ SFML and SFGUI are requred to be installed beforehand, while EntityX, Box2D and 
 - LTBL2 (https://github.com/222464/LTBL2)
 
 ##Building and Running
-Building requires GCC 4.9 or later or any compiler with C++14 support. A QtCreater project file is also provided in /src (outdated). `data` and `config.ini` (or .ini specified on ``argv[1]``) should be in the same directory as the built executable
+Building requires GCC 4.9 or later, or any compiler with C++14 support. The `data` folder and `config.ini` (or .ini specified on ``argv[1]``) should be in the same directory as the built executable
 ```
 cd SDL2D3/
 git submodule init
@@ -39,5 +38,3 @@ Mouse wheel + CTRL |  Change light size
 Left click  | Place box
 Right click | Place circle
 Middle click| Remove body at cursor
-
-
