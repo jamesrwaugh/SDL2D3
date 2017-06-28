@@ -16,7 +16,7 @@ SFML and SFGUI are requred to be installed beforehand, while EntityX, Box2D and 
 - Box2D (https://github.com/erincatto/Box2D)
 - LTBL2 (https://github.com/222464/LTBL2)
 
-##Building and Running
+## Building and Running
 Building requires GCC 4.9 or later, or any compiler with C++14 support. The `data` folder and `config.ini` (or .ini specified on ``argv[1]``) should be in the same directory as the built executable
 ```
 cd SDL2D3/
@@ -29,7 +29,7 @@ make
 
 This will build the executable SDL2D3 in the top-level directory.
 
-##Controls
+## Controls
 Control | Action
 ----------| ---------
 Arrow Keys / WASD | Pan screen
