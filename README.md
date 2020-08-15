@@ -9,7 +9,7 @@ The primary purpose of this project is an example of combining the libraries in 
 ## Requirements
 SFML and SFGUI are requred to be installed beforehand, while EntityX, Box2D and LTBL2 are included as submodules.
 - SFML 2.2+ (http://www.sfml-dev.org/download.php)
-- SFGUI 0.30+ (http://sfgui.sfml-dev.de/download/)
+- SFGUI 0.30+ (https://github.com/TankOs/SFGUI)
 
 ## Included Libraries
 - EntityX (https://github.com/alecthomas/entityx)
